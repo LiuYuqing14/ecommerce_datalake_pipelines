@@ -6,7 +6,6 @@ from typing import Optional
 import pandas as pd
 import streamlit as st
 
-
 # Repo root = one level above apps/
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ENRICHED_ROOT = REPO_ROOT / "data" / "silver" / "enriched"

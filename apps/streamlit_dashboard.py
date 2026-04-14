@@ -2,23 +2,21 @@ from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
-
 from charts import (
-    revenue_comparison_bar,
-    operational_metrics_bar,
+    category_revenue_bar,
     clv_distribution_bar,
     customer_value_scatter,
-    top_customers_bar,
-    order_count_distribution_bar,
-    top_products_bar,
-    category_revenue_bar,
-    sales_velocity_distribution,
-    return_rate_by_category,
     inventory_risk_distribution,
-    top_attention_products,
+    operational_metrics_bar,
+    order_count_distribution_bar,
+    return_rate_by_category,
+    revenue_comparison_bar,
     revenue_vs_inventory_scatter,
+    sales_velocity_distribution,
+    top_attention_products,
+    top_customers_bar,
+    top_products_bar,
 )
-
 from data_loader import (
     latest_partition,
     load_customer_lifetime_value,
@@ -31,7 +29,6 @@ from data_loader import (
     load_shipping_economics,
     preview_table_info,
 )
-
 
 st.set_page_config(
     page_title="Retail Analytics App",

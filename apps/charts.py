@@ -39,7 +39,10 @@ def revenue_comparison_bar(df: pd.DataFrame):
     plot_df = pd.DataFrame(
         {
             "metric": ["Gross Revenue", "Net Revenue"],
-            "value": [df["gross_revenue"].sum(), df["net_revenue"].sum()],
+            "value": [
+                df["gross_revenue"].sum(),
+                df["net_revenue"].sum(),
+            ],
         }
     )
 
@@ -89,13 +92,20 @@ def operational_metrics_bar(df: pd.DataFrame):
     )
     return fig
 
-def clv_distribution_bar(df: pd.DataFrame, positive_only: bool = False):
+
+def clv_distribution_bar(
+    df: pd.DataFrame,
+    positive_only: bool = False,
+):
     required = ["net_clv"]
     if df.empty or any(col not in df.columns for col in required):
         return None
 
     plot_df = df.copy()
-    plot_df["net_clv"] = pd.to_numeric(plot_df["net_clv"], errors="coerce").fillna(0)
+    plot_df["net_clv"] = pd.to_numeric(
+        plot_df["net_clv"],
+        errors="coerce",
+    ).fillna(0)
 
     if positive_only:
         plot_df = plot_df[plot_df["net_clv"] > 0]
@@ -105,7 +115,11 @@ def clv_distribution_bar(df: pd.DataFrame, positive_only: bool = False):
 
     bins = [-1, 0, 100, 500, 1000, 5000, float("inf")]
     labels = ["0", "1-100", "101-500", "501-1000", "1001-5000", "5000+"]
-    plot_df["clv_bucket"] = pd.cut(plot_df["net_clv"], bins=bins, labels=labels)
+    plot_df["clv_bucket"] = pd.cut(
+        plot_df["net_clv"],
+        bins=bins,
+        labels=labels,
+    )
 
     agg = (
         plot_df.groupby("clv_bucket", observed=False)
@@ -113,7 +127,11 @@ def clv_distribution_bar(df: pd.DataFrame, positive_only: bool = False):
         .reset_index(name="customer_count")
     )
 
-    title = "Positive Customer CLV Distribution" if positive_only else "Customer CLV Distribution"
+    title = (
+        "Positive Customer CLV Distribution"
+        if positive_only
+        else "Customer CLV Distribution"
+    )
 
     fig = px.bar(
         agg,
@@ -141,12 +159,16 @@ def customer_value_scatter(df: pd.DataFrame):
     for col in required:
         plot_df[col] = pd.to_numeric(plot_df[col], errors="coerce")
 
+    hover_cols = (
+        [c for c in ["customer_id"] if c in plot_df.columns]
+    )
+
     fig = px.scatter(
         plot_df,
         x="order_count",
         y="total_spent",
         color="net_clv",
-        hover_data=[c for c in ["customer_id"] if c in plot_df.columns],
+        hover_data=hover_cols,
         title="Customer Value: Spend vs Order Count",
     )
     fig.update_layout(
@@ -181,13 +203,17 @@ def top_customers_bar(df: pd.DataFrame, top_n: int = 10):
     )
     return fig
 
+
 def order_count_distribution_bar(df: pd.DataFrame):
     required = ["order_count"]
     if df.empty or any(col not in df.columns for col in required):
         return None
 
     plot_df = df.copy()
-    plot_df["order_count"] = pd.to_numeric(plot_df["order_count"], errors="coerce").fillna(0)
+    plot_df["order_count"] = pd.to_numeric(
+        plot_df["order_count"],
+        errors="coerce",
+    ).fillna(0)
 
     agg = (
         plot_df.groupby("order_count")
@@ -209,12 +235,16 @@ def order_count_distribution_bar(df: pd.DataFrame):
     )
     return fig
 
+
 def signup_trend_bar(df: pd.DataFrame):
     if df.empty or "signup_date" not in df.columns:
         return None
 
     plot_df = df.copy()
-    plot_df["signup_date"] = pd.to_datetime(plot_df["signup_date"], errors="coerce")
+    plot_df["signup_date"] = pd.to_datetime(
+        plot_df["signup_date"],
+        errors="coerce",
+    )
     plot_df = plot_df.dropna(subset=["signup_date"])
 
     if plot_df.empty:
@@ -236,15 +266,36 @@ def signup_trend_bar(df: pd.DataFrame):
     )
     return fig
 
+
 def top_products_bar(df: pd.DataFrame, top_n: int = 10):
-    if df.empty or "product_id" not in df.columns or "net_revenue" not in df.columns:
+    if (
+        df.empty
+        or "product_id" not in df.columns
+        or "net_revenue" not in df.columns
+    ):
         return None
 
     plot_df = df.copy()
-    plot_df["net_revenue"] = pd.to_numeric(plot_df["net_revenue"], errors="coerce")
-    plot_df = plot_df.sort_values("net_revenue", ascending=False).head(top_n)
+    plot_df["net_revenue"] = pd.to_numeric(
+        plot_df["net_revenue"],
+        errors="coerce",
+    )
+    plot_df = plot_df.sort_values(
+        "net_revenue",
+        ascending=False,
+    ).head(top_n)
 
-    label_col = "product_name" if "product_name" in plot_df.columns else "product_id"
+    label_col = (
+        "product_name"
+        if "product_name" in plot_df.columns
+        else "product_id"
+    )
+
+    hover_data = (
+        ["product_id", "category"]
+        if "category" in plot_df.columns
+        else ["product_id"]
+    )
 
     fig = px.bar(
         plot_df,
@@ -252,7 +303,7 @@ def top_products_bar(df: pd.DataFrame, top_n: int = 10):
         y=label_col,
         orientation="h",
         title=f"Top {top_n} Products by Net Revenue",
-        hover_data=["product_id", "category"] if "category" in plot_df.columns else ["product_id"],
+        hover_data=hover_data,
     )
     fig.update_layout(
         xaxis_title="Net Revenue",
@@ -264,11 +315,18 @@ def top_products_bar(df: pd.DataFrame, top_n: int = 10):
 
 
 def category_revenue_bar(df: pd.DataFrame):
-    if df.empty or "category" not in df.columns or "net_revenue" not in df.columns:
+    if (
+        df.empty
+        or "category" not in df.columns
+        or "net_revenue" not in df.columns
+    ):
         return None
 
     plot_df = df.copy()
-    plot_df["net_revenue"] = pd.to_numeric(plot_df["net_revenue"], errors="coerce")
+    plot_df["net_revenue"] = pd.to_numeric(
+        plot_df["net_revenue"],
+        errors="coerce",
+    )
 
     agg = (
         plot_df.groupby("category", as_index=False)["net_revenue"]
@@ -292,11 +350,18 @@ def category_revenue_bar(df: pd.DataFrame):
 
 
 def return_rate_by_category(df: pd.DataFrame):
-    if df.empty or "category" not in df.columns or "return_rate" not in df.columns:
+    if (
+        df.empty
+        or "category" not in df.columns
+        or "return_rate" not in df.columns
+    ):
         return None
 
     plot_df = df.copy()
-    plot_df["return_rate"] = pd.to_numeric(plot_df["return_rate"], errors="coerce")
+    plot_df["return_rate"] = pd.to_numeric(
+        plot_df["return_rate"],
+        errors="coerce",
+    )
 
     agg = (
         plot_df.groupby("category", as_index=False)["return_rate"]
@@ -324,7 +389,10 @@ def sales_velocity_distribution(df: pd.DataFrame):
         return None
 
     plot_df = df.copy()
-    plot_df["velocity_avg"] = pd.to_numeric(plot_df["velocity_avg"], errors="coerce")
+    plot_df["velocity_avg"] = pd.to_numeric(
+        plot_df["velocity_avg"],
+        errors="coerce",
+    )
 
     fig = px.histogram(
         plot_df,
@@ -344,7 +412,11 @@ def inventory_risk_distribution(df: pd.DataFrame):
     if df.empty or "risk_tier" not in df.columns:
         return None
 
-    agg = df.groupby("risk_tier", as_index=False).size().rename(columns={"size": "count"})
+    agg = (
+        df.groupby("risk_tier", as_index=False)
+        .size()
+        .rename(columns={"size": "count"})
+    )
 
     fig = px.bar(
         agg,
@@ -361,14 +433,34 @@ def inventory_risk_distribution(df: pd.DataFrame):
 
 
 def top_attention_products(df: pd.DataFrame, top_n: int = 10):
-    if df.empty or "product_id" not in df.columns or "attention_score" not in df.columns:
+    if (
+        df.empty
+        or "product_id" not in df.columns
+        or "attention_score" not in df.columns
+    ):
         return None
 
     plot_df = df.copy()
-    plot_df["attention_score"] = pd.to_numeric(plot_df["attention_score"], errors="coerce")
-    plot_df = plot_df.sort_values("attention_score", ascending=False).head(top_n)
+    plot_df["attention_score"] = pd.to_numeric(
+        plot_df["attention_score"],
+        errors="coerce",
+    )
+    plot_df = plot_df.sort_values(
+        "attention_score",
+        ascending=False,
+    ).head(top_n)
 
-    label_col = "product_name" if "product_name" in plot_df.columns else "product_id"
+    label_col = (
+        "product_name"
+        if "product_name" in plot_df.columns
+        else "product_id"
+    )
+
+    hover_data = (
+        ["product_id", "category"]
+        if "category" in plot_df.columns
+        else ["product_id"]
+    )
 
     fig = px.bar(
         plot_df,
@@ -376,7 +468,7 @@ def top_attention_products(df: pd.DataFrame, top_n: int = 10):
         y=label_col,
         orientation="h",
         title=f"Top {top_n} Products Requiring Attention",
-        hover_data=["product_id", "category"] if "category" in plot_df.columns else ["product_id"],
+        hover_data=hover_data,
     )
     fig.update_layout(
         xaxis_title="Attention Score",
@@ -393,8 +485,14 @@ def revenue_vs_inventory_scatter(df: pd.DataFrame):
         return None
 
     plot_df = df.copy()
-    plot_df["net_revenue"] = pd.to_numeric(plot_df["net_revenue"], errors="coerce")
-    plot_df["inventory_quantity"] = pd.to_numeric(plot_df["inventory_quantity"], errors="coerce")
+    plot_df["net_revenue"] = pd.to_numeric(
+        plot_df["net_revenue"],
+        errors="coerce",
+    )
+    plot_df["inventory_quantity"] = pd.to_numeric(
+        plot_df["inventory_quantity"],
+        errors="coerce",
+    )
 
     # 只显示正收入商品，图会干净很多
     plot_df = plot_df[plot_df["net_revenue"] > 0]
@@ -408,11 +506,13 @@ def revenue_vs_inventory_scatter(df: pd.DataFrame):
     if "category" in plot_df.columns:
         hover_cols.append("category")
 
+    color_col = "return_rate" if "return_rate" in plot_df.columns else None
+
     fig = px.scatter(
         plot_df,
         x="inventory_quantity",
         y="net_revenue",
-        color="return_rate" if "return_rate" in plot_df.columns else None,
+        color=color_col,
         hover_data=hover_cols,
         title="Net Revenue vs Inventory Quantity",
     )
