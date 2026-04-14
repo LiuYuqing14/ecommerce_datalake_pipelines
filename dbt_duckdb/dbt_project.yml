@@ -1,0 +1,33 @@
+name: "ecom_dbt_duckdb"
+version: "1.0.5"
+config-version: 2
+
+profile: "ecom_dbt_duckdb"
+
+model-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+# Store target/logs in /tmp to avoid Docker volume file-locking issues (Errno 35)
+
+# Disable partial parsing to avoid lock contention on manifest.msgpack
+flags:
+  partial_parse: false
+  send_anonymous_usage_stats: false
+
+vars:
+  bronze_base_path: "{{ env_var('BRONZE_BASE_PATH', 'samples/bronze') }}"
+  silver_base_path: "{{ env_var('SILVER_BASE_PATH', 'data/silver/base') }}"
+  dims_base_path: "{{ env_var('SILVER_DIMS_PATH', 'data/silver/dims') }}"
+
+tests:
+  +severity: warn
+
+models:
+  ecom_dbt_duckdb:
+    base_silver:
+      +materialized: table
+      _archive:
+        +enabled: false

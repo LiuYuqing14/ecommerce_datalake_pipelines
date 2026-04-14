@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Enriched silver tables loaded from Parquet by Airflow."
+    tables:
+      - name: int_attributed_purchases
+      - name: int_cart_attribution
+      - name: int_customer_lifetime_value
+      - name: int_inventory_risk
+      - name: int_customer_retention_signals
+      - name: int_daily_business_metrics
+      - name: int_product_performance
+      - name: int_sales_velocity
+      - name: int_regional_financials
+      - name: int_shipping_economics

@@ -1,0 +1,9 @@
+dims:
+  base_path: "${SILVER_DIMS_PATH:-data/silver/dims}"
+  tables:
+    - name: "customers"
+      partition_key: "snapshot_dt"
+      dbt_model: "stg_ecommerce__customers"
+    - name: "product_catalog"
+      partition_key: "snapshot_dt"
+      dbt_model: "stg_ecommerce__product_catalog"

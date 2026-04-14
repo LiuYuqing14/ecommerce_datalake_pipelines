@@ -1,0 +1,118 @@
+x-airflow-common: &airflow-common
+  # Use custom image with pipeline dependencies baked in
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: ${PIPELINE_IMAGE:-ecom-datalake-pipeline}:${PIPELINE_TAG:-latest}
+  env_file:
+    - ${DOCKER_ENV_FILE:-docker.env}
+  environment:
+    # Airflow Core Config
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "False"
+    AIRFLOW__WEBSERVER__SECRET_KEY: "${AIRFLOW__WEBSERVER__SECRET_KEY:-}"
+    AIRFLOW__CORE__FERNET_KEY: "${AIRFLOW__CORE__FERNET_KEY:-}"
+    PYTHONPATH: "/opt/airflow"
+
+    # Pipeline Environment (local, dev, prod)
+    PIPELINE_ENV: "${PIPELINE_ENV:-local}"
+    OBSERVABILITY_ENV: "${OBSERVABILITY_ENV:-local}"
+    CLOUDSDK_CONFIG: "/home/airflow/.config/gcloud"
+    GOOGLE_APPLICATION_CREDENTIALS: "${GOOGLE_APPLICATION_CREDENTIALS:-/home/airflow/.config/gcloud/application_default_credentials.json}"
+    USE_SA_AUTH: "${USE_SA_AUTH:-false}"
+
+    # Redirect writable paths to /tmp inside container to avoid macOS Docker volume locking (Errno 35)
+    DBT_TARGET_PATH: "/tmp/dbt_target"
+    DBT_LOG_PATH: "/tmp/dbt_logs"
+    DBT_DUCKDB_PATH: "/tmp/dbt_duckdb/ecom.duckdb"
+    METRICS_BASE_PATH: "/tmp/metrics"
+    LOGS_BASE_PATH: "/tmp/logs"
+    DBT_PARTIAL_PARSE: "false"
+    PYTHONWARNINGS: "ignore:invalid escape sequence:SyntaxWarning"
+
+    # GCP Configuration (optional - only needed for prod/dev with GCS/BigQuery)
+    GOOGLE_CLOUD_PROJECT: "${GOOGLE_CLOUD_PROJECT:-}"
+    GCS_BUCKET: "${GCS_BUCKET:-}"
+    BQ_LOCATION: "${BQ_LOCATION:-US}"
+    BQ_LOAD_ENABLED: "${BQ_LOAD_ENABLED:-}"
+    # Use docker.env for GCS buckets and paths to avoid host env overrides.
+
+    # Feature Flags
+    GOLD_PIPELINE_ENABLED: "${GOLD_PIPELINE_ENABLED:-false}"
+    BRONZE_QA_REQUIRED: "${BRONZE_QA_REQUIRED:-true}"
+    BRONZE_QA_FAIL: "${BRONZE_QA_FAIL:-false}"
+    AIRFLOW_USERNAME: "${AIRFLOW_USERNAME:-airflow}"
+    AIRFLOW_PASSWORD: "${AIRFLOW_PASSWORD:-airflow}"
+    AIRFLOW_EMAIL: "${AIRFLOW_EMAIL:-airflow@example.com}"
+    AIRFLOW_FIRSTNAME: "${AIRFLOW_FIRSTNAME:-Airflow}"
+    AIRFLOW_LASTNAME: "${AIRFLOW_LASTNAME:-Admin}"
+
+  volumes:
+    # Use a named volume for logs to avoid host FS deadlocks
+    - airflow-logs:/opt/airflow/logs
+    # - ./airflow/plugins:/opt/airflow/plugins
+    - ./airflow/dags:/opt/airflow/dags
+
+    # Mount data directories for local runs
+    # NOTE: Use a named volume for /opt/airflow/data to avoid host FS deadlocks.
+    - ./samples:/opt/airflow/samples
+    - airflow-data:/opt/airflow/data
+    - ./docs:/opt/airflow/docs
+    # ADC (default): mount gcloud application-default credentials
+    # ⚠️  WARNING: Exposes local gcloud credentials to container. DEV/LOCAL ONLY.
+    #              For production deployments, use Service Account authentication:
+    #              Set USE_SA_AUTH=true and mount service account key file.
+    - ${CLOUDSDK_CONFIG_PATH:-~/.config/gcloud}:/home/airflow/.config/gcloud:rw
+    # Optional service account key (set USE_SA_AUTH=true + GOOGLE_APPLICATION_CREDENTIALS)
+    # - ${GCP_SA_KEY_PATH}:/opt/airflow/.gcp/sa.json:ro
+
+    # Mount source code for development (keep baked-in copies for prod)
+    # WARNING: Uncommenting dbt_duckdb can cause Errno 35 on macOS Docker Desktop
+    - ./src:/opt/airflow/src
+    - ./config:/opt/airflow/config
+    # - ./dbt_duckdb:/opt/airflow/dbt_duckdb
+    # - ./dbt_bigquery:/opt/airflow/dbt_bigquery
+
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    - postgres
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-airflow}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-airflow}"
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create
+      --role Admin
+      --username ${AIRFLOW_USERNAME}
+      --password ${AIRFLOW_PASSWORD}
+      --firstname ${AIRFLOW_FIRSTNAME}
+      --lastname ${AIRFLOW_LASTNAME}
+      --email ${AIRFLOW_EMAIL} || true"
+
+volumes:
+  postgres-db-volume:
+  airflow-logs:
+  airflow-data:

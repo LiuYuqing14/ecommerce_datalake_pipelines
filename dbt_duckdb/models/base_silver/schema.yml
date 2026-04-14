@@ -1,0 +1,903 @@
+version: 2
+
+models:
+  - name: stg_ecommerce__orders
+    description: "Base Silver cleaned orders"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "gross_total >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "net_total >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_discount_amount is null or total_discount_amount >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "shipping_cost is null or shipping_cost >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "actual_shipping_cost is null or actual_shipping_cost >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "payment_processing_fee is null or payment_processing_fee >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_items is null or total_items >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'ORD-%'"
+              config:
+                severity: warn
+      - name: customer_id
+        description: "Customer identifier associated with the order."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'CUST-%' or customer_id like 'GUEST-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__customers')
+                field: customer_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: order_date
+        description: "Timestamp when the order was placed."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: gross_total
+        description: "Gross order total before discounts."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: net_total
+        description: "Net order total after discounts."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: order_channel
+        description: "Channel where the order was placed."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["web", "phone", "social media", "ebay", "newegg"]
+              config:
+                severity: warn
+      - name: payment_method
+        description: "Payment method used for the order."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["credit card", "paypal", "apple pay", "google pay", "ach"]
+              config:
+                severity: warn
+      - name: shipping_speed
+        description: "Shipping speed selected for the order."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["standard", "two-day", "overnight"]
+              config:
+                severity: warn
+      - name: customer_tier
+        description: "Customer tier at time of order."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["bronze", "silver", "gold", "platinum"]
+              config:
+                severity: warn
+      - name: order_dt
+        description: "Partition date for orders."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__order_items
+    description: "Base Silver cleaned order items"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, product_id]
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "quantity > 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "unit_price >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "discount_amount is null or discount_amount >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "cost_price is null or cost_price >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: order_id
+        description: "Order identifier (FK to orders)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'ORD-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__orders')
+                field: order_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: product_id
+        description: "Product identifier (FK to product_catalog)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__product_catalog')
+                field: product_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: quantity
+        description: "Quantity of the product on the order line."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: unit_price
+        description: "Unit price charged for the order line."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: order_dt
+        description: "Partition date for order items."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__customers
+    description: "Base Silver cleaned customers"
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'CUST-%'"
+              config:
+                severity: warn
+      - name: email
+        description: "Customer email address."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like '%@%.%'"
+              config:
+                severity: warn
+      - name: signup_date
+        description: "Date when the customer signed up."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: signup_dt
+        description: "Partition date for customers."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__product_catalog
+    description: "Base Silver cleaned product catalog"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "unit_price >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "cost_price is null or cost_price >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "inventory_quantity is null or inventory_quantity >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: product_id
+        description: "Unique product identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: warn
+      - name: product_name
+        description: "Product display name."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: unit_price
+        description: "Current unit price."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__shopping_carts
+    description: "Base Silver cleaned shopping carts"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "cart_total is null or cart_total >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: cart_id
+        description: "Unique cart identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'CART-%'"
+              config:
+                severity: warn
+      - name: customer_id
+        description: "Customer identifier (FK to customers)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__customers')
+                field: customer_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: created_at
+        description: "Timestamp when the cart was created."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: created_dt
+        description: "Partition date for shopping carts."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__cart_items
+    description: "Base Silver cleaned cart items"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cart_id, product_id, added_at]
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "quantity > 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "unit_price >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: cart_item_id
+        description: "Unique cart item identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: cart_id
+        description: "Cart identifier (FK to shopping_carts)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'CART-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__shopping_carts')
+                field: cart_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: product_id
+        description: "Product identifier (FK to product_catalog)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__product_catalog')
+                field: product_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: quantity
+        description: "Quantity of the item in the cart."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: unit_price
+        description: "Unit price for the cart line."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: added_at
+        description: "Timestamp when the item was added to the cart."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: added_dt
+        description: "Partition date for cart items."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__returns
+    description: "Base Silver cleaned returns"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "refunded_amount is null or refunded_amount >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: return_id
+        description: "Unique return identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'RTN-%'"
+              config:
+                severity: warn
+      - name: order_id
+        description: "Order identifier (FK to orders)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'ORD-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__orders')
+                field: order_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: customer_id
+        description: "Customer identifier (FK to customers)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'CUST-%' or customer_id like 'GUEST-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__customers')
+                field: customer_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: return_date
+        description: "Timestamp when the return was initiated."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: return_channel
+        description: "Channel where the return was initiated."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["web", "phone", "ebay", "social media", "newegg"]
+              config:
+                severity: warn
+      - name: return_dt
+        description: "Partition date for returns."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__return_items
+    description: "Base Silver cleaned return items"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [return_id, product_id]
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "quantity_returned > 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "unit_price >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "cost_price is null or cost_price >= 0"
+          config:
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "refunded_amount is null or refunded_amount >= 0"
+          config:
+            severity: warn
+    columns:
+      - name: return_item_id
+        description: "Unique return item identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: return_id
+        description: "Return identifier (FK to returns)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'RTN-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__returns')
+                field: return_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: order_id
+        description: "Order identifier (FK to orders)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "like 'ORD-%'"
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__orders')
+                field: order_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: product_id
+        description: "Product identifier (FK to product_catalog)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('stg_ecommerce__product_catalog')
+                field: product_id
+              config:
+                tags: ["relationships"]
+                severity: warn
+      - name: quantity_returned
+        description: "Quantity returned for the line."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: return_dt
+        description: "Partition date for return items."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: batch_id
+        description: "Lineage batch identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ingestion_ts
+        description: "Ingestion timestamp for lineage."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: event_id
+        description: "Lineage event identifier."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: source_file
+        description: "Lineage source file."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__orders_quarantine
+    description: "Orders rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__order_items_quarantine
+    description: "Order items rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__customers_quarantine
+    description: "Customers rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__product_catalog_quarantine
+    description: "Products rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__shopping_carts_quarantine
+    description: "Shopping carts rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__cart_items_quarantine
+    description: "Cart items rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__returns_quarantine
+    description: "Returns rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+  - name: stg_ecommerce__return_items_quarantine
+    description: "Return items rejected from Base Silver with invalid_reason"
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "invalid_reason <> ''"
+          config:
+            severity: warn
+    columns:
+      - name: invalid_reason
+        description: "Pipe-delimited validation failures for the row."
+        tests:
+          - not_null:
+              config:
+                severity: warn

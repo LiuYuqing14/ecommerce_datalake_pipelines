@@ -1,0 +1,64 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Raw data from Bronze layer (Parquet files)
+    loader: GCS/Local
+    schema: main
+    tables:
+      - name: orders
+        description: Raw orders data
+        external:
+          location: "{{ var('bronze_base_path') }}/orders/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: order_items
+        description: Raw order line items
+        external:
+          location: "{{ var('bronze_base_path') }}/order_items/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: customers
+        description: Raw customer data
+        external:
+          location: "{{ var('bronze_base_path') }}/customers/signup_date=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: product_catalog
+        description: Raw product catalog snapshots
+        external:
+          location: "{{ var('bronze_base_path') }}/product_catalog/category=*/*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: shopping_carts
+        description: Raw shopping cart events
+        external:
+          location: "{{ var('bronze_base_path') }}/shopping_carts/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: cart_items
+        description: Raw cart line items
+        external:
+          location: "{{ var('bronze_base_path') }}/cart_items/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: returns
+        description: Raw return requests
+        external:
+          location: "{{ var('bronze_base_path') }}/returns/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true
+      - name: return_items
+        description: Raw return line items
+        external:
+          location: "{{ var('bronze_base_path') }}/return_items/ingest_dt=*/part-*.parquet"
+          options:
+            format: parquet
+            hive_partitioning: true

@@ -1,0 +1,77 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.env
+.env.*
+docker.env
+!.env.example
+.envrc
+.venv/
+.conda/
+.vscode/*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+samples/
+!samples/
+samples/*
+!samples/*.zip
+CONTRIBUTING.md
+SECURITY.md
+
+# Test coverage artifacts
+coverage_html/
+.coverage
+htmlcov/
+
+# Package manager lock files (using conda)
+uv.lock
+build/*
+docs/local_only/*
+
+logs/
+
+# Local data and metrics (ephemeral - don't commit)
+data/bronze/
+data/metrics/
+data/logs/
+data/silver/
+samples/
+!samples/
+samples/*
+!samples/dims_samples.zip
+!samples/bronze_samples.zip
+
+# Validation reports (ephemeral during testing)
+docs/validation_reports/*.md
+!docs/validation_reports/README.md
+
+# dbt
+dbt_packages/
+logs/
+target/
+dbt_duckdb/dbt_packages/
+dbt_duckdb/logs/
+dbt_duckdb/target/
+dbt_duckdb/tmp/
+dbt_duckdb/\{\{*/
+
+# airflow
+airflow/logs/
+airflow/airflow.db
+airflow/standalone_admin_password.txt
+airflow/plugins/__pycache__/
+
+# IDE
+.vscode/.ropeproject/
+.DS_Store
+.claude/*
+*.egg-info/
+src/*.egg-info/
+.gcloud/*
+google-cloud-sdk/
+gcloud init/
+interview_prep/*

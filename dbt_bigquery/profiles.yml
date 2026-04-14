@@ -1,0 +1,11 @@
+ecom_dbt_bigquery:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: "{{ env_var('DBT_BQ_METHOD', 'oauth') }}"
+      keyfile: "{{ env_var('DBT_BIGQUERY_KEYFILE', '') }}"
+      project: "{{ env_var('GOOGLE_CLOUD_PROJECT', 'gcs-automation-project') }}"
+      dataset: "{{ env_var('BQ_DATASET', 'silver') }}"
+      threads: 4
+      location: "US"

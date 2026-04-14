@@ -1,0 +1,23 @@
+name: dbt Validation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  dbt-bigquery-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dbt
+        run: |
+          pip install dbt-bigquery
+      - name: Validate BigQuery Models (Parse)
+        run: |
+          cd dbt_bigquery
+          dbt deps
+          dbt parse

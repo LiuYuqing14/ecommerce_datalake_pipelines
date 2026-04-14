@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ecom-datalake-pipelines"
+version = "1.0.7"
+description = "Medallion architecture pipelines with rich silver transforms."
+readme = "README.md"
+requires-python = ">=3.12"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Garrett Schumacher"}
+]
+dependencies = [
+  # Core data processing
+  "polars>=0.20.0",
+  "pyarrow>=15.0.0",
+
+  # Configuration & validation
+  "pydantic>=2.6.0",
+  "pydantic-settings>=2.2.0",
+  "pyyaml>=6.0.1",
+
+  # File system access (local + GCS)
+  "fsspec>=2024.2.0",
+  "gcsfs>=2024.2.0",
+
+  # dbt & database
+  "dbt-core>=1.7.0",
+  "dbt-duckdb>=1.7.0",
+
+  # CLI
+  "click>=8.1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.9.0",
+    "types-PyYAML>=6.0.0",
+    "ruff>=0.3.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "yamllint>=1.35.0",
+    "pandas>=2.0.0",
+]
+dbt = [
+    "dbt-core>=1.8.0",
+    "dbt-duckdb>=1.8.0",
+    "dbt-bigquery>=1.8.0",
+]
+
+airflow = [
+  "apache-airflow-providers-google>=10.15.0",
+]
+
+# All optional dependencies for full pipeline
+all = [
+  "ecom-datalake-pipelines[dev,airflow]",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "I", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "airflow", "common"]
+
+[tool.ruff.lint.per-file-ignores]
+"airflow/dags/*.py" = ["E501"]  # Allow long lines in DAG files (Jinja templates)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests for individual functions",
+    "integration: Integration tests for full pipeline flows",
+]
+addopts = [
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:coverage_html",
+    "--cov-fail-under=60",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "src/__init__.py",
+    "src/*/__init__.py",
+    "src/*/*/__init__.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+show_missing = true
+
+[tool.mypy]
+python_version = "3.12"
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+exclude = ["scripts/adhoc/", "tests/"]
+
+[[tool.mypy.overrides]]
+module = [
+    "airflow",
+    "airflow.*",
+    "fsspec",
+    "pandas",
+    "pendulum",
+    "pyarrow",
+    "pyarrow.parquet",
+    "pyarrow.lib",
+    "yaml",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["src.cli.app"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
+
+[tool.pylint.main]
+py-version = "3.12"
+ignore = [".venv", "build", "dist"]
+
+[tool.pylint."messages control"]
+disable = [
+  "missing-module-docstring",
+  "missing-function-docstring",
+  "missing-class-docstring",
+  "too-few-public-methods",
+]
+
+[project.scripts]
+ecomlake = "src.cli.app:cli"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"]

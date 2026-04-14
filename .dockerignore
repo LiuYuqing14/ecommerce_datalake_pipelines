@@ -1,0 +1,90 @@
+# =============================================================================
+# .dockerignore - Exclude files from Docker build context
+# =============================================================================
+# Reduces build context size and speeds up image builds
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data directories (mount these as volumes instead if not baking)
+data/
+# samples/  <-- Allowed for baked image
+# docs/     <-- Allowed for baked image
+
+# Logs
+*.log
+airflow/logs/
+logs/
+
+# Temp files
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Environment files (use env vars instead)
+.env
+.env.*
+
+# Google Cloud credentials (mount at runtime, never bake into image)
+.gcloud/
+.config/gcloud/
+**/application_default_credentials.json
+**/*service-account*.json
+**/*serviceaccount*.json
+
+# Documentation (not needed in runtime image)
+docs/
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# dbt artifacts (generated at runtime)
+dbt_duckdb/target/
+dbt_duckdb/logs/
+dbt_duckdb/dbt_packages/
+dbt_bigquery/target/
+dbt_bigquery/logs/
+dbt_bigquery/dbt_packages/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Scripts (not needed in runtime)
+# scripts/  <-- Allowed for baked image

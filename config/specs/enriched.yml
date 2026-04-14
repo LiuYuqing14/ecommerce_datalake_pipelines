@@ -1,0 +1,44 @@
+silver_enriched:
+  base_path: "${SILVER_ENRICHED_PATH:-data/silver/enriched}"
+  lookback_days: ${ENRICHED_LOOKBACK_DAYS:-0}
+  tables:
+    - name: "int_attributed_purchases"
+      partition_key: "order_dt"
+      inputs: ["silver_base.shopping_carts", "silver_base.orders"]
+      min_rows: 1
+    - name: "int_cart_attribution"
+      partition_key: "cart_dt"
+      inputs: ["silver_base.shopping_carts", "silver_base.cart_items", "silver_base.orders"]
+      min_rows: 1
+    - name: "int_inventory_risk"
+      partition_key: "ingest_dt"
+      inputs: ["silver_base.product_catalog", "silver_base.order_items", "silver_base.return_items"]
+      min_rows: 1
+    - name: "int_customer_retention_signals"
+      partition_key: "ingest_dt"
+      inputs: ["silver_base.customers", "silver_base.orders"]
+      min_rows: 1
+    - name: "int_customer_lifetime_value"
+      partition_key: "ingest_dt"
+      inputs: ["silver_base.customers", "silver_base.orders", "silver_base.returns"]
+      min_rows: 1
+    - name: "int_daily_business_metrics"
+      partition_key: "date"
+      inputs: ["silver_base.orders", "silver_base.returns", "silver_base.shopping_carts"]
+      min_rows: 1
+    - name: "int_product_performance"
+      partition_key: "product_dt"
+      inputs: ["silver_base.product_catalog", "silver_base.order_items", "silver_base.return_items", "silver_base.cart_items"]
+      min_rows: 1
+    - name: "int_sales_velocity"
+      partition_key: "order_dt"
+      inputs: ["silver_base.orders", "silver_base.order_items"]
+      min_rows: 1
+    - name: "int_regional_financials"
+      partition_key: "order_dt"
+      inputs: ["silver_base.orders", "silver_base.customers"]
+      min_rows: 1
+    - name: "int_shipping_economics"
+      partition_key: "order_dt"
+      inputs: ["silver_base.orders"]
+      min_rows: 1

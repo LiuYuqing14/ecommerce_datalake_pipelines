@@ -1,0 +1,62 @@
+silver_base:
+  base_path: "${SILVER_BASE_PATH:-data/silver/base}"
+  quarantine_path: "${SILVER_QUARANTINE_PATH:-data/silver/base/quarantine}"
+  tables:
+    - name: "customers"
+      partition_key: "signup_dt"
+      source: "bronze.customers"
+      dbt_model: "stg_ecommerce__customers"
+      quality:
+        sla: 0.98
+        min_rows: 1
+    - name: "product_catalog"
+      partition_key: "ingestion_dt"
+      source: "bronze.product_catalog"
+      dbt_model: "stg_ecommerce__product_catalog"
+      quality:
+        sla: 0.99
+        min_rows: 1
+    - name: "orders"
+      partition_key: "ingestion_dt"
+      source: "bronze.orders"
+      dbt_model: "stg_ecommerce__orders"
+      quality:
+        sla: 0.95
+        min_rows: 1
+    - name: "order_items"
+      partition_key: "ingestion_dt"
+      source: "bronze.order_items"
+      dbt_model: "stg_ecommerce__order_items"
+      quality:
+        sla: 0.95
+        min_rows: 1
+    - name: "shopping_carts"
+      partition_key: "ingestion_dt"
+      source: "bronze.shopping_carts"
+      dbt_model: "stg_ecommerce__shopping_carts"
+      quality:
+        sla: 0.95
+        min_rows: 1
+    - name: "cart_items"
+      partition_key: "ingestion_dt"
+      source: "bronze.cart_items"
+      dbt_model: "stg_ecommerce__cart_items"
+      quality:
+        sla: 0.95
+        min_rows: 1
+    - name: "returns"
+      partition_key: "ingestion_dt"
+      source: "bronze.returns"
+      dbt_model: "stg_ecommerce__returns"
+      quality:
+        sla: 0.95
+        min_rows: 1
+        allow_empty: true
+    - name: "return_items"
+      partition_key: "ingestion_dt"
+      source: "bronze.return_items"
+      dbt_model: "stg_ecommerce__return_items"
+      quality:
+        sla: 0.95
+        min_rows: 1
+        allow_empty: true

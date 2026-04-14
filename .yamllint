@@ -1,0 +1,15 @@
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 150
+    level: warning
+  truthy: disable
+
+ignore: |
+  .venv/
+  dbt_duckdb/dbt_packages/
+  dbt_bigquery/dbt_packages/
+  uv.lock
+  package-lock.yml

@@ -1,0 +1,221 @@
+pipeline:
+  # GCP Configuration
+  project_id: "gcs-automation-project"
+
+  # Data Lake Buckets (use "local" for local filesystem)
+  bronze_bucket: "gcs-automation-project-raw"
+  bronze_prefix: "ecom/raw"
+  silver_bucket: "gcs-automation-project-silver"
+  silver_base_prefix: "data/silver/base"
+  silver_enriched_prefix: "data/silver/enriched"
+  silver_publish_mode: "direct"
+  silver_enriched_publish_mode: "direct"
+  dims_publish_mode: "direct"
+
+  # BigQuery Datasets
+  bigquery_dataset: "silver"
+  gold_dataset: "gold_marts"
+
+  # Observability & Metrics
+  # Environment: local (default), dev, or prod
+  # - local: Writes to ./data/metrics/, ./data/logs/, ./docs/validation_reports/
+  # - dev/prod: Writes to GCS buckets below
+  environment: "local"
+  metrics_bucket: "data-reporting"
+  logs_bucket: "ecom-datalake-logs"
+  reports_bucket: "data-reporting"
+
+  # Airflow Retry Configuration
+  # Environment-appropriate task retry settings with exponential backoff
+  retry_config:
+    local:
+      retries: 1
+      retry_delay_minutes: 1
+      retry_exponential_backoff: false
+      max_retry_delay_minutes: 5
+    dev:
+      retries: 2
+      retry_delay_minutes: 2
+      retry_exponential_backoff: true
+      max_retry_delay_minutes: 10
+    prod:
+      retries: 3
+      retry_delay_minutes: 5
+      retry_exponential_backoff: true
+      max_retry_delay_minutes: 30
+
+  # Business Logic Configuration
+  default_ingest_dt: "2020-01-01"
+  attribution_tolerance_hours: 48
+  churn_danger_window_days: [30, 90]
+  sales_velocity_window_days: 7
+  sla_thresholds:
+    orders: 0.95
+    customers: 0.98
+    product_catalog: 0.99
+    shopping_carts: 0.95
+    cart_items: 0.95
+    order_items: 0.95
+    returns: 0.95
+    return_items: 0.95
+
+  # Contract-level data quality thresholds (post-silver gate)
+  max_quarantine_pct: 5.0
+  max_row_loss_pct: 1.0
+  min_return_id_distinct_ratio: 0.001
+  # Expected ingest_dt partitions (YYYY-MM-DD or range: YYYY-MM-DD..YYYY-MM-DD)
+  expected_bronze_partitions: []
+  # Validation partition window (days back from run date)
+  bronze_validation_lookback_days: 0
+  silver_validation_lookback_days: 0
+  min_table_rows:
+    orders: 1
+    customers: 1
+    product_catalog: 1
+    shopping_carts: 1
+    cart_items: 1
+    order_items: 1
+    returns: 1
+    return_items: 1
+  enriched_tables:
+    - int_attributed_purchases
+    - int_cart_attribution
+    - int_inventory_risk
+    - int_customer_retention_signals
+    - int_customer_lifetime_value
+    - int_daily_business_metrics
+    - int_product_performance
+    - int_sales_velocity
+    - int_regional_financials
+    - int_shipping_economics
+  enriched_min_table_rows:
+    int_attributed_purchases: 1
+    int_cart_attribution: 1
+    int_inventory_risk: 1
+    int_customer_retention_signals: 1
+    int_customer_lifetime_value: 1
+    int_daily_business_metrics: 1
+    int_product_performance: 1
+    int_sales_velocity: 1
+    int_regional_financials: 1
+    int_shipping_economics: 1
+  enriched_lookback_days: 0
+  # NOTE: Ensure enriched_lookback_days >= sales_velocity_window_days to avoid
+  # rolling window leakage for int_sales_velocity.
+  enriched_max_rows_per_file: 50000
+  # Tolerance for ratio checks (handles floating-point rounding).
+  enriched_ratio_epsilon: 0.0001
+  # Minimum cart value required to label a cart as abandoned.
+  cart_abandoned_min_value: 0.0
+  # Decimal precision for rate metrics.
+  rate_precision: 6
+  # Cap rate metrics within [rate_cap_min, rate_cap_max].
+  rate_cap_min: 0.0
+  rate_cap_max: 1.0
+  rate_cap_enabled: true
+  return_units_max_ratio: 2.0
+
+  # Partition Metadata (Bronze Layer)
+  # NOTE: Bronze tables use ingest_dt for most tables, with exceptions for
+  # customers (signup_date) and product_catalog (category)
+  table_partitions:
+    orders: "ingest_dt"
+    order_items: "ingest_dt"
+    cart_items: "ingest_dt"
+    shopping_carts: "ingest_dt"
+    customers: "signup_date"
+    returns: "ingest_dt"
+    return_items: "ingest_dt"
+    product_catalog: "category"
+
+  # Partition Metadata (Silver Layer)
+  # NOTE: Silver tables use ingestion_dt for consistent arrival-time partitioning
+  # This matches Bronze partitioning strategy for easy backfills
+  silver_table_partitions:
+    orders: "ingestion_dt"
+    order_items: "ingestion_dt"
+    cart_items: "ingestion_dt"
+    shopping_carts: "ingestion_dt"
+    customers: "signup_dt"
+    returns: "ingestion_dt"
+    return_items: "ingestion_dt"
+    product_catalog: "ingestion_dt"
+
+  enriched_partitions:
+    int_attributed_purchases: "order_dt"
+    int_cart_attribution: "cart_dt"
+    int_inventory_risk: "ingest_dt"
+    int_customer_retention_signals: "ingest_dt"
+    int_customer_lifetime_value: "ingest_dt"
+    int_daily_business_metrics: "date"
+    int_product_performance: "product_dt"
+    int_sales_velocity: "order_dt"
+    int_regional_financials: "order_dt"
+    int_shipping_economics: "order_dt"
+
+  validation:
+    key_fields:
+      int_attributed_purchases: ["order_id", "customer_id", "cart_id"]
+      int_cart_attribution: ["cart_id", "customer_id"]
+      int_inventory_risk: ["product_id"]
+      int_customer_retention_signals: ["customer_id"]
+      int_customer_lifetime_value: ["customer_id"]
+      int_daily_business_metrics: ["date"]
+      int_product_performance: ["product_id", "product_dt"]
+      int_sales_velocity: ["product_id", "order_dt"]
+      int_regional_financials: ["order_id", "customer_id"]
+      int_shipping_economics: ["order_id", "order_dt"]
+    sanity_checks:
+      non_negative:
+        - "units_sold"
+        - "units_returned"
+        - "units_in_carts"
+        - "gross_revenue"
+        - "cart_value"
+        - "abandoned_value"
+        - "orders_count"
+        - "carts_created"
+        - "returns_count"
+        - "refund_total"
+        - "shipping_cost"
+        - "actual_shipping_cost"
+      rate_0_1:
+        - "return_rate"
+        - "cart_conversion_rate"
+        - "cart_to_order_rate"
+    semantic_checks:
+      int_cart_attribution:
+        - name: "converted_requires_order_id"
+          expr: "cart_status = 'converted' and order_id is null"
+        - name: "abandoned_requires_null_order_id"
+          expr: "cart_status = 'abandoned' and order_id is not null"
+        - name: "abandoned_value_positive_for_abandoned"
+          expr: >-
+            cart_status = 'abandoned' and order_id is null and
+            time_to_purchase_hours is null and abandoned_value is not null
+            and abandoned_value <= {cart_abandoned_min_value}
+        - name: "time_to_purchase_hours_non_negative"
+          expr: "time_to_purchase_hours is not null and time_to_purchase_hours < 0"
+      int_product_performance:
+        - name: "units_returned_within_tolerance"
+          expr: "units_sold > 0 and units_returned > (units_sold * {return_units_max_ratio})"
+        - name: "return_rate_le_one"
+          expr: "return_rate is not null and return_rate > {rate_cap_max}"
+        - name: "cart_to_order_rate_le_one"
+          expr: "cart_to_order_rate is not null and cart_to_order_rate > {rate_cap_max}"
+        - name: "net_margin_le_gross_margin"
+          expr: "net_margin is not null and gross_margin is not null and net_margin > gross_margin"
+      int_customer_lifetime_value:
+        - name: "net_clv_matches_components"
+          expr: "abs((total_spent - total_refunded) - net_clv) > 0.01"
+      int_daily_business_metrics:
+        - name: "return_rate_matches_ratio"
+          expr: "orders_count > 0 and abs(return_rate - expected_return_rate) > {ratio_epsilon}"
+        - name: "cart_conversion_rate_matches_ratio"
+          expr: "carts_created > 0 and abs(cart_conversion_rate - expected_cart_conversion_rate) > {ratio_epsilon}"
+      int_shipping_economics:
+        - name: "shipping_margin_matches_components"
+          expr: >-
+            abs((shipping_cost - actual_shipping_cost) - shipping_margin) > 0.01
+        - name: "shipping_margin_pct_null_when_zero_cost"
+          expr: "shipping_cost = 0 and shipping_margin_pct is not null"

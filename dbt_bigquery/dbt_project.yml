@@ -1,0 +1,20 @@
+name: "ecom_dbt_bigquery"
+version: "1.0.5"
+config-version: 2
+
+profile: "ecom_dbt_bigquery"
+
+model-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+models:
+  ecom_dbt_bigquery:
+    enriched_silver:
+      +materialized: table
+    gold_marts:
+      +materialized: table
+      +tags: ["gold"]
+      +schema: "{{ env_var('BQ_GOLD_DATASET', 'gold_marts') }}"

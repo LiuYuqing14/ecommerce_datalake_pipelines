@@ -1,0 +1,4 @@
+validation:
+  reports_enabled: true
+  output_dir: "${REPORTS_BASE_PATH:-docs/validation_reports}"
+  strict_mode: false
