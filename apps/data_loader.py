@@ -54,9 +54,11 @@ def available_partitions(table_name: str) -> list[str]:
     return [_extract_partition_value(d.name) for d in dirs]
 
 
-def resolve_partition_path(table_name: str, partition_value: Optional[str] = None) -> Path:
+def resolve_partition_path(table_name: str,
+                           partition_value: Optional[str] = None) -> Path:
     """
-    Resolve a table path. If partition_value is provided, find the matching partition directory.
+    Resolve a table path.
+    If partition_value is provided, find the matching partition directory.
     Otherwise return the table root directory.
     """
     table_dir = ENRICHED_ROOT / table_name
@@ -72,7 +74,8 @@ def resolve_partition_path(table_name: str, partition_value: Optional[str] = Non
 
 
 @st.cache_data(show_spinner=False)
-def load_table(table_name: str, partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_table(table_name: str,
+               partition_value: Optional[str] = None) -> pd.DataFrame:
     """
     Generic loader for enriched tables.
     """
@@ -86,37 +89,37 @@ def load_daily_business_metrics(partition_value: Optional[str] = None) -> pd.Dat
 
 
 @st.cache_data(show_spinner=False)
-def load_customer_lifetime_value(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_customer_lifetime_value(partition_value: Optional[str] = None):
     return load_table("int_customer_lifetime_value", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_customer_retention_signals(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_customer_retention_signals(partition_value: Optional[str] = None):
     return load_table("int_customer_retention_signals", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_product_performance(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_product_performance(partition_value: Optional[str] = None):
     return load_table("int_product_performance", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_sales_velocity(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_sales_velocity(partition_value: Optional[str] = None):
     return load_table("int_sales_velocity", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_shipping_economics(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_shipping_economics(partition_value: Optional[str] = None):
     return load_table("int_shipping_economics", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_regional_financials(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_regional_financials(partition_value: Optional[str] = None):
     return load_table("int_regional_financials", partition_value)
 
 
 @st.cache_data(show_spinner=False)
-def load_inventory_risk(partition_value: Optional[str] = None) -> pd.DataFrame:
+def load_inventory_risk(partition_value: Optional[str] = None):
     return load_table("int_inventory_risk", partition_value)
 
 
@@ -133,7 +136,8 @@ def latest_partition(table_name: str) -> Optional[str]:
 
 def preview_table_info() -> pd.DataFrame:
     """
-    Quick helper for debugging: show which enriched tables exist and their latest partition.
+    Quick helper for debugging: show which enriched tables
+    exist and their latest partition.
     """
     target_tables = [
         "int_daily_business_metrics",

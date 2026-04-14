@@ -40,7 +40,7 @@ st.title("Retail Analytics App")
 st.caption("Built on top of the enriched layer from the ecom_datalake_pipelines repo.")
 
 
-def safe_metric(df: pd.DataFrame, column: str, agg: str = "sum", fmt: str = "number") -> str:
+def safe_metric(df: pd.DataFrame, column: str, agg: str = "sum", fmt: str = "number"):
     if df.empty or column not in df.columns:
         return "N/A"
 
@@ -98,7 +98,8 @@ def median_metric(df: pd.DataFrame, column: str) -> str:
         return "N/A"
     return f"{value:,.2f}"
 
-def safe_metric_if_col(df: pd.DataFrame, column: str | None, agg: str = "sum", fmt: str = "number") -> str:
+def safe_metric_if_col(df: pd.DataFrame, column: str | None,
+                       agg: str = "sum", fmt: str = "number") -> str:
     if not column:
         return "N/A"
     return safe_metric(df, column, agg, fmt)
@@ -123,7 +124,8 @@ def first_available_mean(df: pd.DataFrame, candidates: list[str]) -> str:
             return safe_metric(df, col, "mean")
     return "N/A"
 
-def count_risk_threshold(df: pd.DataFrame, candidates: list[str], threshold: float) -> str:
+def count_risk_threshold(df: pd.DataFrame,
+                         candidates: list[str], threshold: float) -> str:
     if df.empty:
         return "N/A"
 
@@ -135,14 +137,16 @@ def count_risk_threshold(df: pd.DataFrame, candidates: list[str], threshold: flo
     value = (series >= threshold).sum()
     return f"{value:,}"
 
-def count_equals_case_insensitive(df: pd.DataFrame, column: str, target: str) -> str:
+def count_equals_case_insensitive(df: pd.DataFrame,
+                                  column: str, target: str) -> str:
     if df.empty or column not in df.columns:
         return "N/A"
     value = (df[column].astype(str).str.lower() == target.lower()).sum()
     return f"{value:,}"
 
 
-def first_existing_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
+def first_existing_column(df: pd.DataFrame,
+                          candidates: list[str]) -> str | None:
     for col in candidates:
         if col in df.columns:
             return col
@@ -299,15 +303,19 @@ elif page == "Customer Intelligence":
     with c2:
         st.metric("Median CLV", median_metric(customer_ltv_df, "net_clv"))
     with c3:
-        st.metric("Avg Orders / Customer", safe_metric(customer_ltv_df, "order_count", "mean"))
+        st.metric("Avg Orders / Customer", safe_metric(customer_ltv_df,
+                                                       "order_count", "mean"))
     with c4:
-        st.metric("Retention Signals Rows", safe_metric(retention_df, "customer_id", "count"))
+        st.metric("Retention Signals Rows", safe_metric(retention_df,
+                                                        "customer_id", "count"))
 
     c5, c6, c7, c8 = st.columns(4)
     with c5:
-        st.metric("Total Customer Spend", safe_metric(customer_ltv_df, "total_spent", "sum"))
+        st.metric("Total Customer Spend", safe_metric(customer_ltv_df,
+                                                      "total_spent", "sum"))
     with c6:
-        st.metric("Total Refunded", safe_metric(customer_ltv_df, "total_refunded", "sum"))
+        st.metric("Total Refunded", safe_metric(customer_ltv_df,
+                                                "total_refunded", "sum"))
     with c7:
         st.metric("Positive CLV Customers", count_positive(customer_ltv_df, "net_clv"))
     with c8:
@@ -414,31 +422,42 @@ elif page == "Product & Inventory":
     with c1:
         st.metric("Products", safe_metric(product_df, "product_id", "count"))
     with c2:
-        st.metric("Total Net Revenue", safe_metric_if_col(product_df, revenue_col, "sum"))
+        st.metric("Total Net Revenue", safe_metric_if_col(product_df,
+                                                          revenue_col, "sum"))
     with c3:
-        st.metric("Avg Velocity", safe_metric_if_col(velocity_df, velocity_col, "mean"))
+        st.metric("Avg Velocity", safe_metric_if_col(velocity_df,
+                                                     velocity_col, "mean"))
     with c4:
-        st.metric("Inventory Risk Rows", safe_metric(inventory_df, "product_id", "count"))
+        st.metric("Inventory Risk Rows", safe_metric(inventory_df,
+                                                     "product_id", "count"))
 
     c5, c6, c7, c8 = st.columns(4)
     with c5:
-        st.metric("Avg Margin %", safe_metric(product_df, "margin_pct", "mean", fmt="pct"))
+        st.metric("Avg Margin %", safe_metric(product_df,
+                                              "margin_pct", "mean", fmt="pct"))
     with c6:
-        st.metric("Avg Return Rate", safe_metric(product_df, "return_rate", "mean", fmt="pct"))
+        st.metric("Avg Return Rate", safe_metric(product_df,
+                                                 "return_rate", "mean", fmt="pct"))
     with c7:
-        st.metric("High Risk Tier Products", count_equals_case_insensitive(inventory_df, "risk_tier", "high"))
+        st.metric("High Risk Tier Products",
+                  count_equals_case_insensitive(inventory_df, "risk_tier", "high"))
     with c8:
-        st.metric("Avg Attention Score", safe_metric_if_col(inventory_df, risk_col, "mean"))
+        st.metric("Avg Attention Score", safe_metric_if_col(inventory_df,
+                                                            risk_col, "mean"))
 
     c9, c10, c11, c12 = st.columns(4)
     with c9:
-        st.metric("Total Units Sold", safe_metric(product_df, "units_sold", "sum"))
+        st.metric("Total Units Sold",
+                  safe_metric(product_df, "units_sold", "sum"))
     with c10:
-        st.metric("Total Units Returned", safe_metric(product_df, "units_returned", "sum"))
+        st.metric("Total Units Returned",
+                  safe_metric(product_df, "units_returned", "sum"))
     with c11:
-        st.metric("Total Locked Capital", safe_metric(inventory_df, "locked_capital", "sum"))
+        st.metric("Total Locked Capital",
+                  safe_metric(inventory_df, "locked_capital", "sum"))
     with c12:
-        st.metric("Avg Cart→Order Rate", safe_metric(product_df, "cart_to_order_rate", "mean", fmt="pct"))
+        st.metric("Avg Cart→Order Rate",
+                  safe_metric(product_df, "cart_to_order_rate", "mean", fmt="pct"))
 
     # ----------------------------
     # Charts row 1
@@ -535,7 +554,8 @@ elif page == "Product & Inventory":
             ]
             display_cols = [c for c in preferred_cols if c in product_df.columns]
             st.dataframe(
-                product_df[display_cols].sort_values(by="net_revenue", ascending=False).head(50),
+                product_df[display_cols].sort_values(by="net_revenue",
+                                                     ascending=False).head(50),
                 use_container_width=True,
             )
 
@@ -559,7 +579,8 @@ elif page == "Product & Inventory":
             ]
             display_cols = [c for c in preferred_cols if c in inventory_df.columns]
             st.dataframe(
-                inventory_df[display_cols].sort_values(by="attention_score", ascending=False).head(50),
+                inventory_df[display_cols].sort_values(by="attention_score",
+                                                       ascending=False).head(50),
                 use_container_width=True,
             )
 
@@ -572,9 +593,11 @@ elif page == "Operations & Shipping":
 
     c1, c2 = st.columns(2)
     with c1:
-        st.metric("Shipping Rows", safe_metric(shipping_df, "order_id", "count"))
+        st.metric("Shipping Rows", safe_metric(shipping_df,
+                                               "order_id", "count"))
     with c2:
-        st.metric("Avg Shipping Cost", safe_metric(shipping_df, "shipping_cost", "mean"))
+        st.metric("Avg Shipping Cost", safe_metric(shipping_df,
+                                                   "shipping_cost", "mean"))
 
     if shipping_df.empty:
         st.warning("No shipping economics data found.")
@@ -590,9 +613,11 @@ elif page == "Regional Finance":
 
     c1, c2 = st.columns(2)
     with c1:
-        st.metric("Regional Rows", safe_metric(regional_df, "order_id", "count"))
+        st.metric("Regional Rows", safe_metric(regional_df,
+                                               "order_id", "count"))
     with c2:
-        st.metric("Regional Net Revenue", safe_metric(regional_df, "net_total", "sum"))
+        st.metric("Regional Net Revenue", safe_metric(regional_df,
+                                                      "net_total", "sum"))
 
     if regional_df.empty:
         st.warning("No regional financial data found.")
