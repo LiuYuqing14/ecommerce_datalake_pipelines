@@ -1,4 +1,4 @@
-name: ecom-datalake-pipelines
+name: ecommerce-datalake-pipelines
 channels:
   - conda-forge
 dependencies:
@@ -6,6 +6,9 @@ dependencies:
   - pip
   - pip:
       - -e .
+      - streamlit>=1.32.0
+      - pandas>=2.0.0
+      - plotly>=5.20.0
       - black>=24.2.0
       - dbt-bigquery>=1.7.0
       - dbt-core>=1.7.0
