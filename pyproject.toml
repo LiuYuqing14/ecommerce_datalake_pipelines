@@ -3,14 +3,14 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ecom-datalake-pipelines"
+name = "ecommerce-datalake-pipelines"
 version = "1.0.7"
 description = "Medallion architecture pipelines with rich silver transforms."
 readme = "README.md"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Garrett Schumacher"}
+  {name = "Yuqing Liu"}
 ]
 dependencies = [
   # Core data processing
