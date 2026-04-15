@@ -470,13 +470,6 @@ def main() -> None:
     if months:
         scope_parts.append(f"months={','.join(sorted(months))}")
     scope_text = " ".join(scope_parts) if scope_parts else "scope=all"
-    update_changelog(
-        Path("CHANGELOG.md"),
-        timestamp,
-        scope_text,
-        spot_hash,
-        profile_hash,
-    )
 
 
 if __name__ == "__main__":

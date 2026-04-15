@@ -1008,37 +1008,6 @@ def main() -> None:
         dict_path.write_text(data_dictionary)
         print(f"Wrote {args.data_dictionary}")
 
-    changelog_path = Path("CHANGELOG.md")
-    if changelog_path.exists():
-        scope_parts = []
-        if tables_filter:
-            scope_parts.append(f"tables={','.join(sorted(tables_filter))}")
-        if ingest_dts:
-            scope_parts.append(f"ingest_dts={','.join(sorted(ingest_dts))}")
-        if months:
-            scope_parts.append(f"months={','.join(sorted(months))}")
-        if start_date and end_date:
-            scope_parts.append(f"date_range={start_date}..{end_date}")
-        elif args.date_range:
-            scope_parts.append(f"date_range={args.date_range}")
-        scope_text = " ".join(scope_parts) if scope_parts else "scope=all"
-        changelog_line = (
-            f"- Profile report refreshed {timestamp} {scope_text} "
-            f"hash={report_hash}"
-        )
-        changelog = changelog_path.read_text()
-        marker = "## [Unreleased]"
-        if marker in changelog:
-            before, rest = changelog.split(marker, 1)
-            rest_lines = rest.splitlines()
-            if rest_lines and rest_lines[0].strip() == "":
-                rest_lines = rest_lines[1:]
-            rest_text = "\n".join(rest_lines)
-            changelog = f"{before}{marker}\n{changelog_line}\n{rest_text.lstrip()}"
-            changelog_path.write_text(changelog)
-            print("Updated CHANGELOG.md with profile report refresh.")
-
-
 if __name__ == "__main__":
     if not os.getenv("ECOM_CLI_SUPPRESS_DEPRECATION"):
         warnings.warn(
