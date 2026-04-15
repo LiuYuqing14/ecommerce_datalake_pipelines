@@ -16,6 +16,11 @@ dependencies = [
   # Core data processing
   "polars>=0.20.0",
   "pyarrow>=15.0.0",
+  "pandas>=2.0.0",
+
+  # App / visualization
+  "streamlit>=1.32.0",
+  "plotly>=5.20.0",
 
   # Configuration & validation
   "pydantic>=2.6.0",
@@ -54,6 +59,10 @@ dbt = [
 
 airflow = [
   "apache-airflow-providers-google>=10.15.0",
+]
+
+ml = [
+  "scikit-learn>=1.4.0",
 ]
 
 # All optional dependencies for full pipeline

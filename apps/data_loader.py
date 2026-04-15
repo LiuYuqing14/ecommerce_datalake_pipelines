@@ -97,6 +97,9 @@ def load_customer_lifetime_value(partition_value: Optional[str] = None):
 def load_customer_retention_signals(partition_value: Optional[str] = None):
     return load_table("int_customer_retention_signals", partition_value)
 
+@st.cache_data(show_spinner=False)
+def load_customer_segments(partition_value: Optional[str] = None):
+    return load_table("int_customer_segments", partition_value)
 
 @st.cache_data(show_spinner=False)
 def load_product_performance(partition_value: Optional[str] = None):
@@ -150,6 +153,7 @@ def preview_table_info() -> pd.DataFrame:
         "int_inventory_risk",
         "int_attributed_purchases",
         "int_cart_attribution",
+        "int_customer_segments"
     ]
 
     rows = []
